@@ -29,6 +29,13 @@
             <div>
                 <h2 class="text-4xl font-bold">Welcome to My Website</h2>
                 <p class="mt-2 text-lg">Your gateway to awesome content</p>
+                <!-- 현재 날짜와 시간 표시 -->
+                <p class="mt-4 text-sm">
+                    <?php
+                        date_default_timezone_set('Asia/Seoul'); // 타임존 설정
+                        echo "Today is " . date("Y-m-d") . " | Current Time: " . date("H:i:s");
+                    ?>
+                </p>
             </div>
         </div>
     </section>

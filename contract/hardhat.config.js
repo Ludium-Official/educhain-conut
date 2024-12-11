@@ -5,7 +5,7 @@ module.exports = {
   networks: {
     edu: {
       url: "https://rpc.open-campus-codex.gelato.digital",
-      accounts: ["53d3069385dd1bed7d47876e410b9a84861502fe99f060ea25a732ee10c58d8c"]
+      accounts: ["INSERT PRIVATE KEY"]
     }
   },
   etherscan: {

@@ -8,10 +8,10 @@ async function createFactory() {
   console.log("Factory Address: ",conut.target);
 }
 
-// createFactory().then(()=> process.exit(0)).catch((error)=>{
-//   console.error(error);
-//   process.exit(1);
-// });
+createFactory().then(()=> process.exit(0)).catch((error)=>{
+  console.error(error);
+  process.exit(1);
+});
 
 
 async function createProgram() {

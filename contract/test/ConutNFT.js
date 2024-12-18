@@ -5,7 +5,7 @@ async function deploy() {
     const conutNFT = await contract.deploy();
   
     console.log(conutNFT);
-    console.log("Factory Address: ",conutNFT.target);
+    console.log("NFT Address: ",conutNFT.target);
 }
 
 // deploy().then(()=>process.exit(0).catch((error)=>{
@@ -21,7 +21,7 @@ async function mintNFT() {
     console.log(tx);
 }
 
-mintNFT().then(()=>process.exit(0).catch((error)=>{
-    console.error(error);
-    process.exit(1);
-}))
+// mintNFT().then(()=>process.exit(0).catch((error)=>{
+//     console.error(error);
+//     process.exit(1);
+// }))

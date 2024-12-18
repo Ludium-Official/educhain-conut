@@ -1,47 +1,7 @@
 <?php
-// Node.js로 요청 보내기 (PHP 섹션)
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // 입력 데이터 수집
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-
-    // Node.js API 서버 URL
-    $nodeServerUrl = 'http://localhost:3005/register';
-
-    // 이메일 또는 패스워드가 비어 있으면 에러 반환
-    if (!$email || !$password) {
-        echo json_encode(['success' => false, 'message' => 'Email and password are required.']);
-        exit;
-    }
-
-    // Node.js로 전송할 데이터
-    $data = [
-        'email' => $email,
-        'password' => $password
-    ];
-
-    // HTTP 요청 옵션 설정
-    $options = [
-        'http' => [
-            'header' => "Content-Type: application/json\r\n",
-            'method' => 'POST',
-            'content' => json_encode($data)
-        ]
-    ];
-
-    // Node.js API 서버로 요청 보내기
-    $context = stream_context_create($options);
-    $response = file_get_contents($nodeServerUrl, false, $context);
-
-    if ($response === FALSE) {
-        echo json_encode(['success' => false, 'message' => 'Failed to communicate with Node.js server.']);
-        exit;
-    }
-
-    // Node.js 서버에서 받은 응답 출력
-    echo $response;
-    exit; // PHP 종료
-}
+// wepin
+$appId = 'fabc3e2b39b96fb214dbd3f027ed1726';
+$appKey = 'ak_live_6LktE7yRpWCwjOWMmQuADeADltfEuGLJfnfNWrjdcoE';
 ?>
 
 <!DOCTYPE html>
@@ -49,10 +9,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
+    <title>My Tailwind PHP Website</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Wepin SDK -->
+    <script type="module">
+        // wepin
+        import { WepinSDK } from 'https://cdn.jsdelivr.net/npm/@wepin/sdk-js@latest/+esm';
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const wepinSdk = new WepinSDK({
+                appId: "<?php echo $appId; ?>",  // PHP에서 설정한 App ID
+                appKey: "<?php echo $appKey; ?>" // PHP에서 설정한 App Key
+            });
+
+            // 위젯 초기화
+            await wepinSdk.init({
+                defaultLanguage: "ko",
+            });
+
+            // 버튼 이벤트 핸들링
+            document.getElementById("connect-widget").addEventListener("click", async () => {
+                console.log("Wepin 위젯 초기화 완료");
+                try{
+                    // await wepinSdk.logout();
+
+                    const response = await wepinSdk.loginWithUI();
+
+                    console.log(response);
+                    
+                    if (response.status === "success") {
+                        console.log("로그인 성공")
+                        const loginButton = document.getElementById("connect-widget");
+                        loginButton.classList.remove("bg-blue-600", "hover:bg-blue-700");
+                        loginButton.classList.add("bg-green-600", "hover:bg-green-700");
+                    } else {
+                        console.warn("로그인 상태가 success가 아닙니다:", response);
+                    }
+                }
+                catch(error){
+                    console.error(error);
+                }
+            });
+
+
+            document.getElementById("open-wallet").addEventListener("click", async () => {
+                const response = await wepinSdk.openWidget();
+                console.log(response);
+            });
+
+            document.getElementById("get-status").addEventListener("click", async () => {
+                const response = await wepinSdk.getAccounts(
+                //     {
+                //     networks: ["Ethereum","evmOpenCampus-Testnet"], 
+                //     withEoa: true
+                // }
+            );
+                console.log(response);
+            });
+
+            document.getElementById("logout").addEventListener("click", async () => {
+                const response = await wepinSdk.logout();
+                console.log(response);
+            });
+
+            document.getElementById("send").addEventListener("click", async () => {
+                const response = await wepinSdk.send({
+                    account: {
+                        address: '0x7A20e281D60edfFd6E7388187A3bcF1451f1CA75',
+                        network: "evmOpenCampus-Testnet",
+                    },
+                    txData: {
+                        to: '0x49f44752140f1a32493EB905d0A6Ee82677eE373',
+                        amount: '0.00001',
+                    }
+                });
+                console.log(response);
+            });
+        });
+
+        ////////////////////////////////////
+        /////////////contract///////////////
+        ////////////////////////////////////
+        
+
+
+    </script>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-100 text-gray-800 flex-col items-center justify-center h-screen">
 
     <!-- 회원가입 폼 -->
     <div class="container mx-auto max-w-md px-4 py-8">
@@ -87,43 +131,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 
-    <script>
-        // 회원가입 요청 처리 (JavaScript 섹션)
-        document.getElementById('signupForm').addEventListener('submit', async function (event) {
-            event.preventDefault(); // 폼 기본 동작 방지
+    <script type="module">
+        // 1. 패키지 import
+        import { WepinLogin } from 'https://cdn.jsdelivr.net/npm/@wepin/login-js@latest/+esm';
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        document.addEventListener("DOMContentLoaded", async () => {
+            const wepinLogin = new WepinLogin({
+                appId: "<?php echo $appId; ?>",
+                appKey: "<?php echo $appKey; ?>"
+            });
 
-            if (!email || !password) {
-                alert('Email and password are required.');
-                return;
-            }
+            await wepinLogin.init({
+                defaultLanguage: "en",
+            });
 
-            try {
+            // 회원가입 요청 처리
+            document.getElementById('signupForm').addEventListener('submit', async function (event) {
+                event.preventDefault(); // 폼 기본 동작 방지
+
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
                 console.log(email, " || ", password);
-                // PHP로 데이터를 전송
-                const response = await fetch('signup.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ email, password })
-                });
 
-                console.log("A");
-                const result = await response.json();
-                console.log(response);
-
-                if (result.success) {
-                    alert(result.message); // 성공 메시지
-                } else {
-                    alert(result.message); // 실패 메시지
+                if (!email || !password) {
+                    alert('Email and password are required.');
+                    return;
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred during registration.');
-            }
+
+                try {
+                    const response = await wepinLogin.signUpWithEmailAndPassword(email, password);
+                    console.log(response);
+                    alert(response);
+                } catch (error) {
+                    console.error(error);
+                    if (error.message === 'auth/email-verified') {
+                        alert("Please verify your email.");
+                    } else if (error.message === 'auth/existed-email') {
+                        const loginResponse = await wepinLogin.loginWithEmailAndPassword(email, password);
+                        console.log(loginResponse);
+                        // 여기서 loginResponse 처리 로직을 추가할 수 있습니다.
+                    } else {
+                        alert('An error occurred during registration.');
+                    }
+                }
+
+            });
         });
     </script>
 
+    <!-- 위젯 연결 버튼 -->
+    <div class="flex gap-1 justify-center mx-auto px-4 py-8">
+        <button 
+            id="connect-widget" 
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            로그인
+        </button>
+
+        <button 
+            id="open-wallet"
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        
+            내 지갑 열기
+        </button>
+
+        <button 
+            id="get-status"
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        
+            account 상태
+        </button>
+
+        <button 
+            id="send"
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        
+            send
+        </button>
+
+        <button 
+            id="logout"
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        
+            로그아웃
+        </button>
+    </div>
 </body>
 </html>

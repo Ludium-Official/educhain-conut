@@ -163,15 +163,28 @@ $appKey = 'ak_live_6LktE7yRpWCwjOWMmQuADeADltfEuGLJfnfNWrjdcoE';
                     console.log(response);
                     alert(response);
                 } catch (error) {
-                    console.error(error);
+                    // console.error(error);
                     if (error.message === 'auth/email-verified') {
                         alert("Please verify your email.");
                     } else if (error.message === 'auth/existed-email') {
-                        const loginResponse = await wepinLogin.loginWithEmailAndPassword(email, password);
-                        console.log(loginResponse);
-                        // 여기서 loginResponse 처리 로직을 추가할 수 있습니다.
+                        try {
+                            const loginResponse = await wepinLogin.loginWithEmailAndPassword(email, password);
+                            console.log("result: ", loginResponse);
+                            const userInfo = await wepinLogin.loginWepin(loginResponse);
+                            console.log("userInfo: ", userInfo);
+                            const userStatus = userInfo.userStatus;
+                            console.log("userStatus: ", userStatus);
+                            if(userStatus.loginStatus === 'pinRequired'||userStatus.loginStatus === 'registerRequired') {
+                                // wepin register
+                                console.log("register complete!");
+                            }
+                            // 여기서 loginResponse 처리 로직을 추가할 수 있습니다.
+                        } catch (error) {
+                            console.error(error);
+                            alert(error);
+                        }
                     } else {
-                        alert('An error occurred during registration.');
+                        alert(error);
                     }
                 }
 

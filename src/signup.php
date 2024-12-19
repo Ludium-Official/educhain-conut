@@ -29,29 +29,33 @@ $appKey = 'ak_live_6LktE7yRpWCwjOWMmQuADeADltfEuGLJfnfNWrjdcoE';
             });
 
             // 버튼 이벤트 핸들링
-            document.getElementById("connect-widget").addEventListener("click", async () => {
-                console.log("Wepin 위젯 초기화 완료");
-                try{
-                    // await wepinSdk.logout();
+            // document.getElementById("connect-widget").addEventListener("click", async () => {
+            //     console.log("Wepin 위젯 초기화 완료");
+            //     try{
+            //         // await wepinSdk.logout();
 
-                    const response = await wepinSdk.loginWithUI();
+            //         const response = await wepinSdk.loginWithUI();
 
-                    console.log(response);
+            //         console.log(response);
                     
-                    if (response.status === "success") {
-                        console.log("로그인 성공")
-                        const loginButton = document.getElementById("connect-widget");
-                        loginButton.classList.remove("bg-blue-600", "hover:bg-blue-700");
-                        loginButton.classList.add("bg-green-600", "hover:bg-green-700");
-                    } else {
-                        console.warn("로그인 상태가 success가 아닙니다:", response);
-                    }
-                }
-                catch(error){
-                    console.error(error);
-                }
-            });
+            //         if (response.status === "success") {
+            //             console.log("로그인 성공")
+            //             const loginButton = document.getElementById("connect-widget");
+            //             loginButton.classList.remove("bg-blue-600", "hover:bg-blue-700");
+            //             loginButton.classList.add("bg-green-600", "hover:bg-green-700");
+            //         } else {
+            //             console.warn("로그인 상태가 success가 아닙니다:", response);
+            //         }
+            //     }
+            //     catch(error){
+            //         console.error(error);
+            //     }
+            // });
 
+            document.getElementById("register-email").addEventListener("click", async () => {
+                const response = await wepinSdk.register();
+                console.log(response);
+            });
 
             document.getElementById("open-wallet").addEventListener("click", async () => {
                 const response = await wepinSdk.openWidget();
@@ -73,19 +77,19 @@ $appKey = 'ak_live_6LktE7yRpWCwjOWMmQuADeADltfEuGLJfnfNWrjdcoE';
                 console.log(response);
             });
 
-            document.getElementById("send").addEventListener("click", async () => {
-                const response = await wepinSdk.send({
-                    account: {
-                        address: '0x7A20e281D60edfFd6E7388187A3bcF1451f1CA75',
-                        network: "evmOpenCampus-Testnet",
-                    },
-                    txData: {
-                        to: '0x49f44752140f1a32493EB905d0A6Ee82677eE373',
-                        amount: '0.00001',
-                    }
-                });
-                console.log(response);
-            });
+            // document.getElementById("send").addEventListener("click", async () => {
+            //     const response = await wepinSdk.send({
+            //         account: {
+            //             address: '0x7A20e281D60edfFd6E7388187A3bcF1451f1CA75',
+            //             network: "evmOpenCampus-Testnet",
+            //         },
+            //         txData: {
+            //             to: '0x49f44752140f1a32493EB905d0A6Ee82677eE373',
+            //             amount: '0.00001',
+            //         }
+            //     });
+            //     console.log(response);
+            // });
         });
 
         ////////////////////////////////////
@@ -100,7 +104,7 @@ $appKey = 'ak_live_6LktE7yRpWCwjOWMmQuADeADltfEuGLJfnfNWrjdcoE';
 
     <!-- 회원가입 폼 -->
     <div class="container mx-auto max-w-md px-4 py-8">
-        <h1 class="text-2xl font-bold text-center mb-6">Sign Up</h1>
+        <h1 class="text-2xl font-bold text-center mb-6">Sign Up / Login</h1>
         <form id="signupForm" class="bg-white shadow-lg rounded-lg p-6">
             <div class="mb-4">
                 <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
@@ -151,7 +155,6 @@ $appKey = 'ak_live_6LktE7yRpWCwjOWMmQuADeADltfEuGLJfnfNWrjdcoE';
 
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                console.log(email, " || ", password);
 
                 if (!email || !password) {
                     alert('Email and password are required.');
@@ -194,10 +197,16 @@ $appKey = 'ak_live_6LktE7yRpWCwjOWMmQuADeADltfEuGLJfnfNWrjdcoE';
 
     <!-- 위젯 연결 버튼 -->
     <div class="flex gap-1 justify-center mx-auto px-4 py-8">
-        <button 
+        <!-- <button 
             id="connect-widget" 
             class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
             로그인
+        </button> -->
+
+        <button 
+            id="register-email"
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">        
+            사용자 등록
         </button>
 
         <button 
@@ -214,12 +223,12 @@ $appKey = 'ak_live_6LktE7yRpWCwjOWMmQuADeADltfEuGLJfnfNWrjdcoE';
             account 상태
         </button>
 
-        <button 
+        <!-- <button 
             id="send"
             class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
         
             send
-        </button>
+        </button> -->
 
         <button 
             id="logout"

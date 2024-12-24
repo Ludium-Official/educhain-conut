@@ -9,7 +9,7 @@ $appKey = 'ak_live_6LktE7yRpWCwjOWMmQuADeADltfEuGLJfnfNWrjdcoE';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Tailwind PHP Website</title>
+    <title>PHP Website</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Wepin SDK -->
@@ -172,16 +172,14 @@ $appKey = 'ak_live_6LktE7yRpWCwjOWMmQuADeADltfEuGLJfnfNWrjdcoE';
                     } else if (error.message === 'auth/existed-email') {
                         try {
                             const loginResponse = await wepinLogin.loginWithEmailAndPassword(email, password);
-                            console.log("result: ", loginResponse);
+                            console.log("loginResponse: ", loginResponse);
                             const userInfo = await wepinLogin.loginWepin(loginResponse);
                             console.log("userInfo: ", userInfo);
                             const userStatus = userInfo.userStatus;
                             console.log("userStatus: ", userStatus);
                             if(userStatus.loginStatus === 'pinRequired'||userStatus.loginStatus === 'registerRequired') {
                                 // wepin register
-                                console.log("register complete!");
                             }
-                            // 여기서 loginResponse 처리 로직을 추가할 수 있습니다.
                         } catch (error) {
                             console.error(error);
                             alert(error);

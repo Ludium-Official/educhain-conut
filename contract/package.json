@@ -1,0 +1,20 @@
+{
+  "name": "educhain-conut",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@nomicfoundation/hardhat-ignition": "^0.15.8",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.1.0",
+    "hardhat": "^2.22.17"
+  },
+  "devDependencies": {
+    "hardhat-ignition": "^0.0.1"
+  }
+}

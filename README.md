@@ -1,4 +1,4 @@
-[![Video Label](https://img.youtube.com/vi/8A494GmpGz8/maxresdefault.jpg)](https://youtube.com/watch?v=8A494GmpGz8)
+[![Video Label](https://img.youtube.com/vi/SLZhnwslOI4/maxresdefault.jpg)](https://youtube.com/watch?v=SLZhnwslOI4)
 
 🚀[Ver. COQUIZ EDU Hackathon github](https://www.coquiz.space/0_educhain/)<br>
 🌍[Ver. COQUIZ KOR APP](https://www.coquiz.space/)<br>

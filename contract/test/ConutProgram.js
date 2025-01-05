@@ -9,7 +9,7 @@ const data = {
 }
 
 // console.log(data.rankings);
-const address = "0xed0bF5597B76B4Cb2b0E718c673CBd58D9ceF667";
+const address = "0x7B6c9cF75fCCBB99149c8De04dBa42b0bFa6A649";
 
 
 async function distributeRewards() {
@@ -34,3 +34,4 @@ async function deposit() {
 //     console.error(error);
 //     process.exit(1);
 // });
+distributeRewards();

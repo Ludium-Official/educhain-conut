@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>코넛 채굴 시뮬레이터</title>
+    <style>
+        body { padding: 20px; font-family: sans-serif; }
+        .box { 
+            border: 2px solid #ddd; 
+            padding: 20px; 
+            margin-top: 10px; 
+            border-radius: 8px; 
+            max-width: 400px; 
+            background-color: #f9f9f9;
+        }
+        .highlight { font-size: 24px; font-weight: bold; color: #2c3e50; }
+        button { 
+            padding: 10px 20px; 
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            font-size: 14px;
+        }
+        button:hover { background: #2980b9; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        /* 활성화된 버튼 스타일 */
+        button.active {
+            background: #e67e22; /* 주황색 강조 */
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(230, 126, 34, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(230, 126, 34, 0); }
+        }
+
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h1>⛏️ 코넛 채굴 시뮬레이터</h1>
+
+    <div id="login-area" class="box">
+        <h3>로그인</h3>
+        <p>테스트할 유저 ID를 입력하세요.</p>
+        <input type="text" id="user-input" placeholder="예: test1" value="test1">
+        <button onclick="login()">접속하기</button>
+    </div>
+
+    <div id="mining-area" class="box" style="display:none;">
+        <h3>내 채굴 현황</h3>
+        <p>상태: <strong id="status-text" style="color:green">● 채굴 중</strong></p>
+        <hr>
+        
+        <p>현재 모은 코넛 조각 (CP)</p>
+        <div id="current-cp" class="highlight">0</div>
+        
+        <div style="margin-top: 15px; font-size: 0.9em; color: #555;">
+            <p>⛏ 채굴 속도: <span id="speed">0</span> CP/h</p>
+            <p>⏱ 경과 시간: <span id="elapsed">00:00:00</span></p>
+            <p>⏳ 남은 시간: <span id="remaining">00:00:00</span></p>
+        </div>
+        
+        <hr>
+        
+        <button id="save-btn" disabled onclick="saveMiningCP()">
+            📦 코넛 조각 보관 (1시간 후 활성화)
+        </button>
+    </div>
+
+    <script>
+        const BACKEND_URL = "http://localhost:3000";
+
+        // [설정] 테스트를 위해 최소 보관 시간을 1시간으로 변경 (1 * 60 * 60 * 1000ms)
+        const STORAGE_MIN_TIME_MS = 1 * 60 * 60 * 1000; 
+
+        let miningData = null; 
+        let timer = null;      
+
+        async function login() {
+            const userId = document.getElementById('user-input').value.trim();
+            if(!userId) return alert('ID를 입력해주세요!');
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/mining/status?user_id=${userId}`);
+                const contentType = res.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("서버 응답 오류 (HTML 응답)");
+                }
+
+                const json = await res.json();
+
+                if (json.success && json.data) {
+                    showMiningScreen(json.data);
+                } else {
+                    console.log("기록 없음, 자동 채굴 시작...");
+                    await startMining(userId);
+                }
+            } catch (err) {
+                alert('오류 발생: ' + err.message);
+            }
+        }
+
+        async function startMining(userId) {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/mining/start`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const json = await res.json();
+                
+                if(json.success) login(); 
+                else alert('시작 실패: ' + json.message);
+            } catch (err) {
+                alert('요청 오류: ' + err.message);
+            }
+        }
+
+        function showMiningScreen(data) {
+            miningData = data;
+            
+            document.getElementById('login-area').style.display = 'none';
+            document.getElementById('mining-area').style.display = 'block';
+            document.getElementById('speed').innerText = data.mining_speed.toLocaleString();
+
+            if(timer) clearInterval(timer);
+            timer = setInterval(updateUI, 1000);
+            updateUI(); 
+        }
+
+        function updateUI() {
+            if(!miningData) return;
+
+            const now = new Date();
+            const start = new Date(miningData.start_time);
+            
+            const limitMs = miningData.mining_duration * 60 * 60 * 1000;
+            
+            let elapsedMs = now - start;
+            if (elapsedMs < 0) elapsedMs = 0;
+
+            // 상태 표시 로직
+            const statusText = document.getElementById('status-text');
+            if (elapsedMs >= limitMs) {
+                elapsedMs = limitMs; 
+                statusText.innerText = "■ 채굴 정지 (시간 초과)";
+                statusText.style.color = "red";
+            } else {
+                statusText.innerText = "● 채굴 중...";
+                statusText.style.color = "green";
+            }
+
+            // [추가된 로직] 1시간 지났는지 체크하여 버튼 활성화
+            const saveBtn = document.getElementById('save-btn');
+            
+            if (elapsedMs >= STORAGE_MIN_TIME_MS) {
+                // 1시간 이상 경과 시
+                saveBtn.disabled = false;
+                saveBtn.classList.add('active'); // 스타일 추가
+                saveBtn.innerText = "📦 코넛 조각 보관하기 (가능)";
+            } else {
+                // 1시간 미만 시
+                saveBtn.disabled = true;
+                saveBtn.classList.remove('active');
+                
+                // 남은 시간 계산해서 버튼에 보여주기 (옵션)
+                const remainToSave = STORAGE_MIN_TIME_MS - elapsedMs;
+                const remainMin = Math.ceil(remainToSave / 60000);
+                saveBtn.innerText = `📦 코넛 조각 보관 (${remainMin}분 후 가능)`;
+            }
+
+            // CP 계산 및 표시
+            const currentMiningCP = Math.floor((elapsedMs / 3600000) * miningData.mining_speed);
+            const totalCP = (miningData.mining_point || 0) + currentMiningCP;
+            
+            document.getElementById('current-cp').innerText = totalCP.toLocaleString();
+            document.getElementById('elapsed').innerText = formatTime(elapsedMs);
+            
+            const remainMs = Math.max(0, limitMs - elapsedMs);
+            document.getElementById('remaining').innerText = formatTime(remainMs);
+        }
+
+        function formatTime(ms) {
+            const totalSec = Math.floor(ms / 1000);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            return `${pad(h)}:${pad(m)}:${pad(s)}`;
+        }
+        function pad(n) { return n < 10 ? '0'+n : n; }
+
+        // ▼▼▼ [추가] 코넛 조각 보관 요청 함수
+        async function saveMiningCP() {
+            const userId = document.getElementById('user-input').value.trim();
+            if(!userId) return;
+
+            if(!confirm("현재까지 채굴한 코넛 조각을 보관하시겠습니까?")) return;
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/mining/save`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const json = await res.json();
+
+                if(json.success) {
+                    alert(`✅ ${json.data.savedCP.toLocaleString()} CP가 안전하게 보관되었습니다!`);
+                    // 화면 갱신 (시간 초기화됨)
+                    login(); 
+                } else {
+                    alert('보관 실패: ' + json.message);
+                }
+            } catch (err) {
+                alert('요청 오류: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

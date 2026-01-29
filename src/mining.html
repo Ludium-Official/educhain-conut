@@ -1,226 +1,796 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>코넛 채굴 시뮬레이터</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>코넛 채굴기 (최종)</title>
     <style>
-        body { padding: 20px; font-family: sans-serif; }
-        .box { 
-            border: 2px solid #ddd; 
-            padding: 20px; 
-            margin-top: 10px; 
-            border-radius: 8px; 
-            max-width: 400px; 
-            background-color: #f9f9f9;
+      body {
+        padding: 20px;
+        font-family: sans-serif;
+        background-color: #f4f6f8;
+      }
+      .box {
+        border: 1px solid #ddd;
+        padding: 25px;
+        margin-top: 15px;
+        border-radius: 10px;
+        max-width: 450px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        position: relative;
+      }
+      .highlight {
+        font-size: 28px;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 10px 0;
+      }
+      button {
+        padding: 12px 24px;
+        background: #3498db;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 6px;
+        font-size: 15px;
+        width: 100%;
+        margin-top: 10px;
+      }
+      button:hover {
+        background: #2980b9;
+      }
+      button:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+      }
+      button.active {
+        background: #e67e22;
+        font-weight: bold;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.7);
         }
-        .highlight { font-size: 24px; font-weight: bold; color: #2c3e50; }
-        button { 
-            padding: 10px 20px; 
-            background: #3498db; 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            border-radius: 4px; 
-            font-size: 14px;
+        70% {
+          box-shadow: 0 0 0 10px rgba(230, 126, 34, 0);
         }
-        button:hover { background: #2980b9; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        
-        /* 활성화된 버튼 스타일 */
-        button.active {
-            background: #e67e22; /* 주황색 강조 */
-            font-weight: bold;
-            animation: pulse 2s infinite;
+        100% {
+          box-shadow: 0 0 0 0 rgba(230, 126, 34, 0);
         }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(230, 126, 34, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(230, 126, 34, 0); }
-        }
+      }
+      input[type="text"] {
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 16px;
+      }
 
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+      .season-badge {
+        background: #6c5ce7;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        margin-left: 10px;
+      }
+      .info-tag {
+        font-size: 12px;
+        background: #ecf0f1;
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: #7f8c8d;
+      }
+      .spec-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        font-size: 14px;
+      }
+      .spec-val {
+        font-weight: bold;
+        color: #e74c3c;
+      }
+      .season-score-card {
+        background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .season-score-val {
+        font-size: 24px;
+        font-weight: bold;
+      }
+      .guide-box {
+        font-size: 12px;
+        color: #555;
+        background: #fff3cd;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        line-height: 1.6;
+      }
+
+      /* 상태바 스타일 */
+      .progress-label {
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .progress-track {
+        display: flex;
+        gap: 3px;
+        background: #ecf0f1;
+        border-radius: 6px;
+        padding: 3px;
+        height: 24px;
+        margin-bottom: 15px;
+      }
+      .progress-cell {
+        flex: 1;
+        background: #bdc3c7;
+        border-radius: 3px;
+        transition: background 0.3s;
+        position: relative;
+      }
+      .progress-cell.filled {
+        background: #27ae60;
+      }
+      .progress-cell.current {
+        background: #2ecc71;
+        animation: blink 1.5s infinite alternate;
+      }
+      @keyframes blink {
+        from {
+          opacity: 0.6;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .progress-cell:hover::after {
+        content: attr(data-hour) "h";
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 10px;
+        color: #333;
+        background: #fff;
+        padding: 2px 4px;
+        border-radius: 3px;
+        border: 1px solid #ccc;
+      }
+
+      /* 히스토리 및 모달 */
+      .history-icon {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 24px;
+        cursor: pointer;
+        transition: transform 0.2s;
+        z-index: 10;
+        user-select: none;
+      }
+      .history-icon:hover {
+        transform: scale(1.2);
+      }
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-box {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        position: relative;
+      }
+      .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 14px;
+      }
+      .history-table th {
+        background: #f8f9fa;
+        padding: 10px;
+        border-bottom: 2px solid #eee;
+        text-align: center;
+        color: #555;
+      }
+      .history-table td {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        text-align: center;
+      }
+      .status-done {
+        color: #27ae60;
+        font-weight: bold;
+      }
+      .status-claim {
+        color: #e67e22;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+      .status-expired {
+        color: #95a5a6;
+      }
+      .status-ing {
+        color: #3498db;
+      }
+      .close-modal {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #aaa;
+      }
+      .close-modal:hover {
+        color: #333;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <h2 style="text-align: center; color: #34495e">⛏️ 코넛 채굴 (시즌제)</h2>
 
-    <h1>⛏️ 코넛 채굴 시뮬레이터</h1>
+    <div style="max-width: 450px; margin: 0 auto">
+      <div class="guide-box">
+        <strong>[테스트 ID 목록]</strong><br />
+        • <b>test</b> : NFT 없음 (기본)<br />
+        • <b>nft1</b> / <b>nft2</b> / <b>nft3</b> : 각 C1, C2, C3 1개<br />
+        • <b>nft13</b> : C1(1개), C3(1개)<br />
+        • <b>nft22</b> : C2(2개)<br />
+        • <b>nft123</b> : C1, C2, C3 각 1개<br />
+        • <b>nft1123</b> : C1(2개), C2(1개), C3(1개)
+      </div>
 
-    <div id="login-area" class="box">
-        <h3>로그인</h3>
-        <p>테스트할 유저 ID를 입력하세요.</p>
-        <input type="text" id="user-input" placeholder="예: test1" value="test1">
+      <div id="login-area" class="box">
+        <h3>🔑 로그인</h3>
+        <input type="text" id="user-input" placeholder="ID 입력" value="test" />
         <button onclick="login()">접속하기</button>
+      </div>
+
+      <div id="mining-area" class="box" style="display: none">
+        <div
+          class="history-icon"
+          onclick="openHistoryModal()"
+          title="채굴 기록 보기"
+        >
+          📝
+        </div>
+
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+          "
+        >
+          <div>
+            <span class="season-badge" id="season-display">Season ?</span>
+            <span class="info-tag" id="user-id-display">USER</span>
+          </div>
+        </div>
+
+        <div class="season-score-card">
+          <div style="font-size: 12px; opacity: 0.9">
+            🏆 이번 시즌 누적 점수
+          </div>
+          <div class="season-score-val">
+            <span id="weekly-point-display">0</span> CP
+          </div>
+        </div>
+
+        <div class="progress-label">
+          <span>채굴 진행도</span>
+          <span
+            ><span id="progress-text">0</span> /
+            <span id="total-hour-text">0</span> 시간</span
+          >
+        </div>
+        <div id="mining-progress-bar" class="progress-track"></div>
+
+        <p>
+          상태: <strong id="status-text" style="color: green">● 채굴 중</strong>
+        </p>
+
+        <div
+          style="
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+          "
+        >
+          <div class="spec-row">
+            <span>⚡ 속도</span>
+            <span class="spec-val"
+              ><span id="current-speed-display">0</span> CP/h</span
+            >
+          </div>
+          <div class="spec-row">
+            <span>⏳ 한계</span>
+            <span class="spec-val"
+              ><span id="current-duration-display">0</span> 시간</span
+            >
+          </div>
+        </div>
+
+        <p>현재 채굴 중 (미보관)</p>
+        <div id="current-cp" class="highlight">0</div>
+
+        <div
+          style="
+            margin-top: 15px;
+            font-size: 14px;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+          "
+        >
+          <span>⏱ 경과: <span id="elapsed">00:00:00</span></span>
+          <span>⏳ 남은 시간: <span id="remaining">00:00:00</span></span>
+        </div>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee" />
+
+        <button id="save-btn" disabled onclick="saveMiningCP()">
+          📦 코넛 조각 보관 (대기 중)
+        </button>
+      </div>
+
+      <div
+        id="claim-area"
+        class="box"
+        style="display: none; border-color: #f1c40f; background: #fffcf0"
+      >
+        <h3 style="margin-top: 0; color: #f39c12">💰 지난 시즌 보상</h3>
+        <p style="font-size: 14px">
+          Season <span id="claim-season-no">0</span> 정산 완료!
+        </p>
+        <div style="font-size: 13px; color: #555; margin-bottom: 10px">
+          내 기여도: <span id="claim-my-point">0</span> /
+          <span id="claim-total-point">0</span> CP
+        </div>
+        <button id="claim-btn" onclick="requestClaim()">보상 클레임하기</button>
+        <p
+          id="claim-status-msg"
+          style="font-size: 12px; color: red; margin-top: 5px"
+        ></p>
+      </div>
     </div>
 
-    <div id="mining-area" class="box" style="display:none;">
-        <h3>내 채굴 현황</h3>
-        <p>상태: <strong id="status-text" style="color:green">● 채굴 중</strong></p>
-        <hr>
-        
-        <p>현재 모은 코넛 조각 (CP)</p>
-        <div id="current-cp" class="highlight">0</div>
-        
-        <div style="margin-top: 15px; font-size: 0.9em; color: #555;">
-            <p>⛏ 채굴 속도: <span id="speed">0</span> CP/h</p>
-            <p>⏱ 경과 시간: <span id="elapsed">00:00:00</span></p>
-            <p>⏳ 남은 시간: <span id="remaining">00:00:00</span></p>
+    <div id="history-modal" class="modal-overlay">
+      <div class="modal-box">
+        <span class="close-modal" onclick="closeHistoryModal()">&times;</span>
+        <h3 style="margin-top: 0; text-align: center">📜 시즌별 토큰 내역</h3>
+
+        <div
+          style="
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+          "
+        >
+          <span style="font-size: 13px; color: #7f8c8d"
+            >💰 지금까지 획득한 총 토큰</span
+          ><br />
+          <strong
+            style="font-size: 22px; color: #2c3e50"
+            id="total-claimed-tokens"
+            >0</strong
+          >
+          <span style="font-size: 14px; color: #555">Tokens</span>
         </div>
-        
-        <hr>
-        
-        <button id="save-btn" disabled onclick="saveMiningCP()">
-            📦 코넛 조각 보관 (1시간 후 활성화)
-        </button>
+
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>시즌</th>
+              <th>할당 토큰</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr>
+              <td colspan="3">로딩 중...</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="text-align: center; margin-top: 20px">
+          <button
+            onclick="closeHistoryModal()"
+            style="background: #95a5a6; width: auto; padding: 8px 20px"
+          >
+            닫기
+          </button>
+        </div>
+      </div>
     </div>
 
     <script>
-        const BACKEND_URL = "http://localhost:3000";
+      const BACKEND_URL = "http://localhost:3000";
+      const STORAGE_MIN_TIME_MS = 10 * 1000;
 
-        // [설정] 테스트를 위해 최소 보관 시간을 1시간으로 변경 (1 * 60 * 60 * 1000ms)
-        const STORAGE_MIN_TIME_MS = 1 * 60 * 60 * 1000; 
+      let miningData = null;
+      let timer = null;
+      let prevSeasonData = null;
+      let totalDurationHours = 0;
 
-        let miningData = null; 
-        let timer = null;      
+      function getNFTInfoByUserId(rawId) {
+        const userId = rawId.replace(/\s+/g, "").toLowerCase();
+        let c1 = 0,
+          c2 = 0,
+          c3 = 0;
+        if (userId === "nft1") c1 = 1;
+        else if (userId === "nft2") c2 = 1;
+        else if (userId === "nft3") c3 = 1;
+        else if (userId === "nft13") {
+          c1 = 1;
+          c3 = 1;
+        } else if (userId === "nft22") {
+          c2 = 2;
+        } else if (userId === "nft123") {
+          c1 = 1;
+          c2 = 1;
+          c3 = 1;
+        } else if (userId === "nft1123") {
+          c1 = 2;
+          c2 = 1;
+          c3 = 1;
+        }
+        return {
+          c1: { count: c1, id: Array(c1).fill("sim") },
+          c2: { count: c2, id: Array(c2).fill("sim") },
+          c3: { count: c3, id: Array(c3).fill("sim") },
+        };
+      }
 
-        async function login() {
-            const userId = document.getElementById('user-input').value.trim();
-            if(!userId) return alert('ID를 입력해주세요!');
+      async function login() {
+        const userId = document.getElementById("user-input").value.trim();
+        if (!userId) return alert("ID를 입력해주세요!");
+        try {
+          const res = await fetch(
+            `${BACKEND_URL}/api/mining/status?user_id=${userId}`,
+          );
+          const json = await res.json();
+          if (json.success && json.data) showMiningScreen(userId, json.data);
+          else await startMining(userId);
+        } catch (err) {
+          alert("오류: " + err.message);
+        }
+      }
 
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/mining/status?user_id=${userId}`);
-                const contentType = res.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    throw new Error("서버 응답 오류 (HTML 응답)");
-                }
+      async function startMining(userId) {
+        try {
+          const nftInfo = getNFTInfoByUserId(userId);
+          const res = await fetch(`${BACKEND_URL}/api/mining/start`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId, nft_info: nftInfo }),
+          });
+          const json = await res.json();
+          if (json.success) login();
+          else alert("시작 실패: " + json.message);
+        } catch (err) {
+          alert(err.message);
+        }
+      }
 
-                const json = await res.json();
+      async function saveMiningCP() {
+        const userId = document.getElementById("user-input").value.trim();
+        if (!confirm(`[${userId}] 보관하시겠습니까?`)) return;
+        try {
+          const nftInfo = getNFTInfoByUserId(userId);
+          const res = await fetch(`${BACKEND_URL}/api/mining/save`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId, nft_info: nftInfo }),
+          });
+          const json = await res.json();
+          if (json.success) {
+            alert(
+              `✅ 보관 완료! (Season ${
+                json.data.seasonNo
+              })\n저장량: ${json.data.savedCP.toLocaleString()} CP`,
+            );
+            login();
+          } else {
+            alert("보관 실패: " + json.message);
+          }
+        } catch (err) {
+          alert(err.message);
+        }
+      }
 
-                if (json.success && json.data) {
-                    showMiningScreen(json.data);
-                } else {
-                    console.log("기록 없음, 자동 채굴 시작...");
-                    await startMining(userId);
-                }
-            } catch (err) {
-                alert('오류 발생: ' + err.message);
-            }
+      function showMiningScreen(userId, data) {
+        miningData = data;
+
+        document.getElementById("login-area").style.display = "none";
+        document.getElementById("mining-area").style.display = "block";
+        document.getElementById("user-id-display").innerText = userId;
+
+        const seasonNo = data.current_season_no || data.season_no || 1;
+        document.getElementById(
+          "season-display",
+        ).innerText = `Season ${seasonNo}`;
+        const weeklyPoint = data.weekly_point || 0;
+        document.getElementById("weekly-point-display").innerText =
+          weeklyPoint.toLocaleString();
+        document.getElementById("current-speed-display").innerText =
+          data.mining_speed.toLocaleString();
+        document.getElementById("current-duration-display").innerText =
+          data.mining_duration;
+
+        totalDurationHours = data.mining_duration;
+        initProgressBar(totalDurationHours);
+
+        if (data.prev_season) updateClaimUI(data.prev_season);
+        else document.getElementById("claim-area").style.display = "none";
+
+        if (timer) clearInterval(timer);
+        timer = setInterval(updateUI, 1000);
+        updateUI();
+      }
+
+      function initProgressBar(totalHours) {
+        const track = document.getElementById("mining-progress-bar");
+        track.innerHTML = "";
+        document.getElementById("total-hour-text").innerText = totalHours;
+        for (let i = 1; i <= totalHours; i++) {
+          const cell = document.createElement("div");
+          cell.className = "progress-cell";
+          cell.dataset.hour = i;
+          track.appendChild(cell);
+        }
+      }
+
+      function updateProgressBar(elapsedMs) {
+        const track = document.getElementById("mining-progress-bar");
+        const cells = track.children;
+        const currentHourIndex = Math.floor(elapsedMs / (1000 * 60 * 60));
+        document.getElementById("progress-text").innerText = currentHourIndex;
+
+        for (let i = 0; i < cells.length; i++) {
+          cells[i].className = "progress-cell";
+          if (i < currentHourIndex) cells[i].classList.add("filled");
+          else if (i === currentHourIndex) cells[i].classList.add("current");
+        }
+      }
+
+      function updateUI() {
+        if (!miningData) return;
+        const now = new Date();
+        const start = new Date(miningData.start_time);
+        const limitMs = miningData.mining_duration * 60 * 60 * 1000;
+
+        let elapsedMs = now - start;
+        if (elapsedMs < 0) elapsedMs = 0;
+
+        const statusText = document.getElementById("status-text");
+        if (elapsedMs >= limitMs) {
+          elapsedMs = limitMs;
+          statusText.innerText = "■ 채굴 정지 (시간 초과)";
+          statusText.style.color = "red";
+        } else {
+          statusText.innerText = "● 채굴 중...";
+          statusText.style.color = "green";
         }
 
-        async function startMining(userId) {
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/mining/start`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: userId })
-                });
-                const json = await res.json();
-                
-                if(json.success) login(); 
-                else alert('시작 실패: ' + json.message);
-            } catch (err) {
-                alert('요청 오류: ' + err.message);
-            }
+        const saveBtn = document.getElementById("save-btn");
+        if (elapsedMs >= STORAGE_MIN_TIME_MS) {
+          saveBtn.disabled = false;
+          saveBtn.classList.add("active");
+          saveBtn.innerText = "📦 코넛 조각 보관하기";
+        } else {
+          saveBtn.disabled = true;
+          saveBtn.classList.remove("active");
+          const remain = Math.ceil((STORAGE_MIN_TIME_MS - elapsedMs) / 1000);
+          saveBtn.innerText = `📦 코넛 조각 보관 (${remain}초)`;
         }
 
-        function showMiningScreen(data) {
-            miningData = data;
-            
-            document.getElementById('login-area').style.display = 'none';
-            document.getElementById('mining-area').style.display = 'block';
-            document.getElementById('speed').innerText = data.mining_speed.toLocaleString();
+        const currentMiningCP = Math.floor(
+          (elapsedMs / 3600000) * miningData.mining_speed,
+        );
+        const totalCP = (miningData.mining_point || 0) + currentMiningCP;
 
-            if(timer) clearInterval(timer);
-            timer = setInterval(updateUI, 1000);
-            updateUI(); 
+        document.getElementById("current-cp").innerText =
+          totalCP.toLocaleString();
+        document.getElementById("elapsed").innerText = formatTime(elapsedMs);
+        const remainMs = Math.max(0, limitMs - elapsedMs);
+        document.getElementById("remaining").innerText = formatTime(remainMs);
+
+        updateProgressBar(elapsedMs);
+      }
+
+      function formatTime(ms) {
+        const totalSec = Math.floor(ms / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        return `${pad(h)}:${pad(m)}:${pad(s)}`;
+      }
+      function pad(n) {
+        return n < 10 ? "0" + n : n;
+      }
+
+      function updateClaimUI(prevData) {
+        prevSeasonData = prevData;
+        const claimArea = document.getElementById("claim-area");
+        const claimBtn = document.getElementById("claim-btn");
+        const msg = document.getElementById("claim-status-msg");
+        document.getElementById("claim-season-no").innerText =
+          prevData.season_no;
+        document.getElementById("claim-my-point").innerText =
+          prevData.my_point.toLocaleString();
+        document.getElementById("claim-total-point").innerText =
+          prevData.weekly_total_point.toLocaleString();
+        claimArea.style.display = "block";
+        const now = new Date();
+        const settleTime = new Date(prevData.settle_time);
+        const endTime = new Date(prevData.claim_end_time);
+        if (prevData.is_claimed) {
+          claimBtn.disabled = true;
+          claimBtn.innerText = "✅ 수령 완료";
+          claimBtn.style.background = "#27ae60";
+          msg.innerText = "";
+        } else if (now < settleTime) {
+          claimBtn.disabled = true;
+          claimBtn.innerText = "⏳ 정산 중...";
+          msg.innerText = "아직 클레임 시간이 아닙니다.";
+        } else if (now >= endTime) {
+          claimBtn.disabled = true;
+          claimBtn.innerText = "🚫 기간 만료";
+          msg.innerText = "클레임 기간이 지났습니다.";
+        } else {
+          claimBtn.disabled = false;
+          claimBtn.innerText = "🎁 토큰 받기";
+          claimBtn.style.background = "#f1c40f";
+          claimBtn.style.color = "#333";
+          msg.innerText = `클레임 가능 기간입니다! (~${
+            endTime.getMonth() + 1
+          }/${endTime.getDate()}까지)`;
+        }
+      }
+
+      async function requestClaim() {
+        if (!prevSeasonData) return;
+        const userId = document.getElementById("user-input").value.trim();
+        const seasonNo = prevSeasonData.season_no;
+        if (!confirm(`Season ${seasonNo} 보상을 수령하시겠습니까?`)) return;
+        await executeClaim(userId, seasonNo);
+      }
+
+      async function executeClaim(userId, seasonNo) {
+        try {
+          const res = await fetch(`${BACKEND_URL}/api/mining/claim`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId, season_no: seasonNo }),
+          });
+          const json = await res.json();
+          if (json.success) {
+            alert(
+              `🎉 축하합니다! ${json.data.rewardToken.toLocaleString()} 토큰을 수령했습니다.`,
+            );
+            if (
+              document.getElementById("history-modal").style.display === "flex"
+            )
+              openHistoryModal();
+            login();
+          } else {
+            alert("실패: " + json.message);
+          }
+        } catch (err) {
+          alert("오류: " + err.message);
+        }
+      }
+
+      async function openHistoryModal() {
+        const userId = document.getElementById("user-input").value.trim();
+        if (!userId) return;
+        const modal = document.getElementById("history-modal");
+        modal.style.display = "flex";
+        const tbody = document.getElementById("history-tbody");
+        tbody.innerHTML = '<tr><td colspan="3">데이터 불러오는 중...</td></tr>';
+
+        try {
+          const res = await fetch(
+            `${BACKEND_URL}/api/mining/history?user_id=${userId}`,
+          );
+          const json = await res.json();
+          if (json.success) renderHistoryTable(json.data);
+          else
+            tbody.innerHTML = `<tr><td colspan="3" style="color:red">${json.message}</td></tr>`;
+        } catch (err) {
+          tbody.innerHTML = `<tr><td colspan="3" style="color:red">오류: ${err.message}</td></tr>`;
+        }
+      }
+
+      function closeHistoryModal() {
+        document.getElementById("history-modal").style.display = "none";
+      }
+
+      function renderHistoryTable(list) {
+        const tbody = document.getElementById("history-tbody");
+        tbody.innerHTML = "";
+
+        // ▼▼▼ [수정] 총 획득 토큰 계산 및 표시 ▼▼▼
+        let totalTokens = 0;
+
+        if (list.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="3">참여 기록이 없습니다.</td></tr>';
+          document.getElementById("total-claimed-tokens").innerText = "0";
+          return;
         }
 
-        function updateUI() {
-            if(!miningData) return;
+        list.forEach((item) => {
+          const tr = document.createElement("tr");
+          let statusClass = "";
+          let tokenText = `${item.token_amount.toLocaleString()}개`;
 
-            const now = new Date();
-            const start = new Date(miningData.start_time);
-            
-            const limitMs = miningData.mining_duration * 60 * 60 * 1000;
-            
-            let elapsedMs = now - start;
-            if (elapsedMs < 0) elapsedMs = 0;
+          // 합계 계산 (상태가 완료인 것만)
+          if (item.status === "완료") {
+            statusClass = "status-done";
+            totalTokens += item.token_amount;
+          } else if (item.status === "클레임 가능")
+            statusClass = "status-claim";
+          else if (item.status === "기간 종료") statusClass = "status-expired";
+          else if (item.status === "진행 중") {
+            statusClass = "status-ing";
+            tokenText = "-";
+          }
 
-            // 상태 표시 로직
-            const statusText = document.getElementById('status-text');
-            if (elapsedMs >= limitMs) {
-                elapsedMs = limitMs; 
-                statusText.innerText = "■ 채굴 정지 (시간 초과)";
-                statusText.style.color = "red";
-            } else {
-                statusText.innerText = "● 채굴 중...";
-                statusText.style.color = "green";
-            }
+          tr.innerHTML = `<td><strong>시즌 ${item.season_no}</strong></td><td>${tokenText}</td><td class="${statusClass}">${item.status}</td>`;
 
-            // [추가된 로직] 1시간 지났는지 체크하여 버튼 활성화
-            const saveBtn = document.getElementById('save-btn');
-            
-            if (elapsedMs >= STORAGE_MIN_TIME_MS) {
-                // 1시간 이상 경과 시
-                saveBtn.disabled = false;
-                saveBtn.classList.add('active'); // 스타일 추가
-                saveBtn.innerText = "📦 코넛 조각 보관하기 (가능)";
-            } else {
-                // 1시간 미만 시
-                saveBtn.disabled = true;
-                saveBtn.classList.remove('active');
-                
-                // 남은 시간 계산해서 버튼에 보여주기 (옵션)
-                const remainToSave = STORAGE_MIN_TIME_MS - elapsedMs;
-                const remainMin = Math.ceil(remainToSave / 60000);
-                saveBtn.innerText = `📦 코넛 조각 보관 (${remainMin}분 후 가능)`;
-            }
+          if (item.status === "클레임 가능") {
+            tr.onclick = () => {
+              if (
+                confirm(`Season ${item.season_no} 보상을 수령하시겠습니까?`)
+              ) {
+                executeClaim(
+                  document.getElementById("user-input").value.trim(),
+                  item.season_no,
+                );
+              }
+            };
+            tr.title = "클릭해서 수령하기";
+            tr.style.cursor = "pointer";
+            tr.style.background = "#fffcf0";
+          }
+          tbody.appendChild(tr);
+        });
 
-            // CP 계산 및 표시
-            const currentMiningCP = Math.floor((elapsedMs / 3600000) * miningData.mining_speed);
-            const totalCP = (miningData.mining_point || 0) + currentMiningCP;
-            
-            document.getElementById('current-cp').innerText = totalCP.toLocaleString();
-            document.getElementById('elapsed').innerText = formatTime(elapsedMs);
-            
-            const remainMs = Math.max(0, limitMs - elapsedMs);
-            document.getElementById('remaining').innerText = formatTime(remainMs);
-        }
-
-        function formatTime(ms) {
-            const totalSec = Math.floor(ms / 1000);
-            const h = Math.floor(totalSec / 3600);
-            const m = Math.floor((totalSec % 3600) / 60);
-            const s = totalSec % 60;
-            return `${pad(h)}:${pad(m)}:${pad(s)}`;
-        }
-        function pad(n) { return n < 10 ? '0'+n : n; }
-
-        // ▼▼▼ [추가] 코넛 조각 보관 요청 함수
-        async function saveMiningCP() {
-            const userId = document.getElementById('user-input').value.trim();
-            if(!userId) return;
-
-            if(!confirm("현재까지 채굴한 코넛 조각을 보관하시겠습니까?")) return;
-
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/mining/save`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: userId })
-                });
-                const json = await res.json();
-
-                if(json.success) {
-                    alert(`✅ ${json.data.savedCP.toLocaleString()} CP가 안전하게 보관되었습니다!`);
-                    // 화면 갱신 (시간 초기화됨)
-                    login(); 
-                } else {
-                    alert('보관 실패: ' + json.message);
-                }
-            } catch (err) {
-                alert('요청 오류: ' + err.message);
-            }
-        }
+        // 총계 업데이트
+        document.getElementById("total-claimed-tokens").innerText =
+          totalTokens.toLocaleString();
+      }
     </script>
-</body>
+  </body>
 </html>

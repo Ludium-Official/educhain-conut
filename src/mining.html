@@ -2,7 +2,7 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <title>코넛 채굴기 (최종)</title>
+    <title>코넛 채굴</title>
     <style>
       body {
         padding: 20px;
@@ -25,6 +25,8 @@
         color: #2c3e50;
         margin: 10px 0;
       }
+
+      /* 기본 버튼 스타일 */
       button {
         padding: 12px 24px;
         background: #3498db;
@@ -35,6 +37,7 @@
         font-size: 15px;
         width: 100%;
         margin-top: 10px;
+        transition: background 0.3s;
       }
       button:hover {
         background: #2980b9;
@@ -42,23 +45,30 @@
       button:disabled {
         background: #bdc3c7;
         cursor: not-allowed;
+      } /* 비활성화 시 스타일 */
+
+      .nft-btn-group {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
       }
-      button.active {
-        background: #e67e22;
+      .nft-btn {
+        flex: 1;
+        padding: 8px;
+        font-size: 13px;
         font-weight: bold;
-        animation: pulse 2s infinite;
       }
-      @keyframes pulse {
-        0% {
-          box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.7);
-        }
-        70% {
-          box-shadow: 0 0 0 10px rgba(230, 126, 34, 0);
-        }
-        100% {
-          box-shadow: 0 0 0 0 rgba(230, 126, 34, 0);
-        }
+      .btn-c1 {
+        background: #1abc9c;
       }
+      .btn-c2 {
+        background: #9b59b6;
+      }
+      .btn-c3 {
+        background: #f1c40f;
+        color: #333;
+      }
+
       input[type="text"] {
         padding: 12px;
         border: 1px solid #ccc;
@@ -116,7 +126,6 @@
         line-height: 1.6;
       }
 
-      /* 상태바 스타일 */
       .progress-label {
         font-size: 12px;
         color: #7f8c8d;
@@ -155,21 +164,7 @@
           opacity: 1;
         }
       }
-      .progress-cell:hover::after {
-        content: attr(data-hour) "h";
-        position: absolute;
-        top: -20px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 10px;
-        color: #333;
-        background: #fff;
-        padding: 2px 4px;
-        border-radius: 3px;
-        border: 1px solid #ccc;
-      }
 
-      /* 히스토리 및 모달 */
       .history-icon {
         position: absolute;
         top: 20px;
@@ -204,10 +199,19 @@
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         position: relative;
       }
+      /* ▼▼▼ 새로 추가할 스크롤 컨테이너 스타일 ▼▼▼ */
+      .table-scroll-area {
+        max-height: 40vh; /* 화면 높이의 40%까지만 커지고 그 이상은 스크롤 */
+        overflow-y: auto;
+        margin-top: 15px;
+        border-radius: 8px;
+        border: 1px solid #eee;
+      }
+      /* 기존 테이블 스타일 수정 */
       .history-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 15px;
+        margin-top: 0; /* 컨테이너에 여백을 주었으므로 0으로 변경 */
         font-size: 14px;
       }
       .history-table th {
@@ -216,6 +220,11 @@
         border-bottom: 2px solid #eee;
         text-align: center;
         color: #555;
+        /* ▼ 스크롤할 때 헤더가 상단에 고정되도록 추가 ▼ */
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
       }
       .history-table td {
         padding: 10px;
@@ -246,29 +255,257 @@
         cursor: pointer;
         color: #aaa;
       }
-      .close-modal:hover {
+
+      /* 부스트 버튼 스타일 */
+      .boost-trigger-btn {
+        margin-left: 10px;
+        padding: 4px 10px;
+        font-size: 12px;
+        background: #e74c3c;
+        color: white;
+        border-radius: 12px;
+        cursor: pointer;
+        border: none;
+        vertical-align: middle;
+        box-shadow: 0 2px 5px rgba(231, 76, 60, 0.4);
+        transition: background 0.3s;
+      }
+      .boost-trigger-btn:hover {
+        background: #c0392b;
+        transform: scale(1.05);
+      }
+
+      /* [추가] 부스트 비활성화(사용중) 스타일 */
+      .boost-trigger-btn:disabled {
+        background: #95a5a6 !important;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .boost-input {
+        width: 80px;
+        text-align: center;
+        font-weight: bold;
+        color: #e74c3c;
+      }
+      #boost-timer-display {
+        font-size: 13px;
+        color: #e74c3c;
+        font-weight: bold;
+        margin-left: 5px;
+      }
+
+      /* 대시보드 전체 래퍼 (레이아웃 꼬임 방지) */
+      .dashboard-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+      }
+
+      /* 탭 버튼 컨테이너 */
+      .season-tabs {
+        display: flex;
+        width: 100%;
+        background-color: #e0e0e0;
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+      }
+
+      .tab-btn {
+        flex: 1;
+        padding: 12px 0;
+        text-align: center;
+        font-weight: bold;
+        color: #777;
+        cursor: pointer;
+        background-color: transparent;
+        border: none;
+        border-right: 1px solid #ccc;
+        font-size: 15px;
+      }
+
+      .tab-btn:last-child {
+        border-right: none;
+      }
+
+      .tab-btn.active {
+        background-color: #f8f9fa; /* 현재 진행 중인 배경색과 일치 */
         color: #333;
+      }
+
+      /* 탭 내용 영역 */
+      .tab-content {
+        display: none; /* 기본적으로 숨김 */
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 0 0 8px 8px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .tab-content.active {
+        display: block; /* 활성화된 탭만 표시 */
+      }
+
+      /* 하얀색 보상 정보 박스 */
+      .reward-info-box {
+        background-color: #fff;
+        padding: 16px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+      }
+
+      .reward-info-box p {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 0 0 12px 0;
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      .reward-info-box p:last-child {
+        margin-bottom: 0;
       }
     </style>
   </head>
   <body>
-    <h2 style="text-align: center; color: #34495e">⛏️ 코넛 채굴 (시즌제)</h2>
+    <h2 style="text-align: center; color: #34495e">⛏️ 코넛 채굴 (최종)</h2>
 
     <div style="max-width: 450px; margin: 0 auto">
-      <div class="guide-box">
-        <strong>[테스트 ID 목록]</strong><br />
-        • <b>test</b> : NFT 없음 (기본)<br />
+      <div id="guide-box" class="guide-box">
+        <strong>[허용된 ID 목록]</strong><br />
+        • <b>test, test1, test2</b> : 기본 상태 (NFT 없음)<br />
         • <b>nft1</b> / <b>nft2</b> / <b>nft3</b> : 각 C1, C2, C3 1개<br />
-        • <b>nft13</b> : C1(1개), C3(1개)<br />
-        • <b>nft22</b> : C2(2개)<br />
-        • <b>nft123</b> : C1, C2, C3 각 1개<br />
-        • <b>nft1123</b> : C1(2개), C2(1개), C3(1개)
+        • <b>nft13</b>, <b>nft22</b>, <b>nft123</b>, <b>nft1123</b> : 조합<br />
+        <span style="color: red">* 목록에 없는 ID는 접속 불가</span>
       </div>
 
       <div id="login-area" class="box">
         <h3>🔑 로그인</h3>
-        <input type="text" id="user-input" placeholder="ID 입력" value="test" />
+        <input
+          type="text"
+          id="user-input"
+          placeholder="ID 입력 (예: test1)"
+          value="test"
+        />
         <button onclick="login()">접속하기</button>
+      </div>
+
+      <div
+        id="dashboard-container"
+        class="dashboard-container"
+        style="display: none"
+      >
+        <div class="season-tabs">
+          <button
+            class="tab-btn active"
+            onclick="switchTab('current')"
+            id="btn-tab-current"
+          >
+            Season 23
+          </button>
+          <button class="tab-btn" onclick="switchTab('prev')" id="btn-tab-prev">
+            Season 22
+          </button>
+          <button class="tab-btn" onclick="switchTab('all')">전체 시즌</button>
+        </div>
+
+        <div id="tab-current" class="tab-content active">
+          <div class="reward-info-box">
+            <p>
+              <span>나의 누적 CP</span>
+              <span id="current-cp-display" style="font-weight: bold"
+                >0.00 CP</span
+              >
+            </p>
+            <p>
+              <span>주간 보상</span>
+              <span
+                id="current-pool-display"
+                style="color: #f1c40f; font-weight: bold"
+                >0</span
+              >
+            </p>
+            <p>
+              <span>전체 누적 CP</span>
+              <span id="current-total-cp-display" style="font-weight: bold"
+                >0.00 CP</span
+              >
+            </p>
+            <p>
+              <span>예상 보상량</span>
+              <span
+                id="current-expected-display"
+                style="color: #f1c40f; font-weight: bold"
+                >0</span
+              >
+            </p>
+          </div>
+        </div>
+
+        <div id="tab-prev" class="tab-content">
+          <div class="reward-info-box">
+            <p>
+              <span>나의 누적 CP</span>
+              <span id="prev-cp-display" style="font-weight: bold"
+                >0.00 CP</span
+              >
+            </p>
+            <p>
+              <span>주간 보상</span>
+              <span
+                id="prev-pool-display"
+                style="color: #f1c40f; font-weight: bold"
+                >0</span
+              >
+            </p>
+            <p>
+              <span>전체 누적 CP</span>
+              <span id="prev-total-cp-display" style="font-weight: bold"
+                >0.00 CP</span
+              >
+            </p>
+            <p>
+              <span>클레임 수량</span>
+              <span
+                id="prev-claim-display"
+                style="color: #f1c40f; font-weight: bold"
+                >0</span
+              >
+            </p>
+          </div>
+        </div>
+
+        <div id="tab-all" class="tab-content">
+          <div class="reward-info-box">
+            <p>
+              <span>나의 누적 CP</span>
+              <span id="all-total-cp-display" style="font-weight: bold"
+                >0.00 CP</span
+              >
+            </p>
+            <p>
+              <span>전체 주간 보상</span>
+              <span
+                id="all-pool-display"
+                style="color: #f1c40f; font-weight: bold"
+                >0</span
+              >
+            </p>
+            <p>
+              <span>내가 받은 총 코넛코인</span>
+              <span
+                id="all-claim-display"
+                style="color: #f1c40f; font-weight: bold"
+                >0</span
+              >
+            </p>
+          </div>
+        </div>
       </div>
 
       <div id="mining-area" class="box" style="display: none">
@@ -314,6 +551,14 @@
 
         <p>
           상태: <strong id="status-text" style="color: green">● 채굴 중</strong>
+          <span id="boost-timer-display"></span>
+          <button
+            id="btn-boost-trigger"
+            class="boost-trigger-btn"
+            onclick="openBoostModal()"
+          >
+            ⚡ 부스트
+          </button>
         </p>
 
         <div
@@ -325,13 +570,13 @@
           "
         >
           <div class="spec-row">
-            <span>⚡ 속도</span>
+            <span>⚡ 현재 속도</span>
             <span class="spec-val"
               ><span id="current-speed-display">0</span> CP/h</span
             >
           </div>
           <div class="spec-row">
-            <span>⏳ 한계</span>
+            <span>⏳ 한계 시간</span>
             <span class="spec-val"
               ><span id="current-duration-display">0</span> 시간</span
             >
@@ -350,7 +595,7 @@
             justify-content: space-between;
           "
         >
-          <span>⏱ 경과: <span id="elapsed">00:00:00</span></span>
+          <span>⏱ 총 경과: <span id="elapsed">00:00:00</span></span>
           <span>⏳ 남은 시간: <span id="remaining">00:00:00</span></span>
         </div>
 
@@ -359,6 +604,35 @@
         <button id="save-btn" disabled onclick="saveMiningCP()">
           📦 코넛 조각 보관 (대기 중)
         </button>
+
+        <div class="nft-btn-group">
+          <button class="nft-btn btn-c1" onclick="addNftTest('c1')">
+            + 💎 C1
+          </button>
+          <button class="nft-btn btn-c2" onclick="addNftTest('c2')">
+            + 🚀 C2
+          </button>
+          <button class="nft-btn btn-c3" onclick="addNftTest('c3')">
+            + 🌟 C3
+          </button>
+        </div>
+        <div
+          style="
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 5px;
+            background: #fafafa;
+            padding: 5px;
+            border-radius: 4px;
+          "
+        >
+          [현재 보유량] C1: <b id="disp-c1">0</b> / C2: <b id="disp-c2">0</b> /
+          C3: <b id="disp-c3">0</b><br />
+          <span style="color: #e67e22"
+            >(추가된 효과는 다음 시즌부터 적용됩니다)</span
+          >
+        </div>
       </div>
 
       <div
@@ -386,7 +660,6 @@
       <div class="modal-box">
         <span class="close-modal" onclick="closeHistoryModal()">&times;</span>
         <h3 style="margin-top: 0; text-align: center">📜 시즌별 토큰 내역</h3>
-
         <div
           style="
             background: #f8f9fa;
@@ -397,31 +670,27 @@
             border: 1px solid #eee;
           "
         >
-          <span style="font-size: 13px; color: #7f8c8d"
-            >💰 지금까지 획득한 총 토큰</span
+          <span style="font-size: 13px; color: #7f8c8d">💰 총 획득 토큰</span
           ><br />
           <strong
             style="font-size: 22px; color: #2c3e50"
             id="total-claimed-tokens"
             >0</strong
           >
-          <span style="font-size: 14px; color: #555">Tokens</span>
+          Tokens
         </div>
-
-        <table class="history-table">
-          <thead>
-            <tr>
-              <th>시즌</th>
-              <th>할당 토큰</th>
-              <th>상태</th>
-            </tr>
-          </thead>
-          <tbody id="history-tbody">
-            <tr>
-              <td colspan="3">로딩 중...</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-scroll-area">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>시즌</th>
+                <th>할당 토큰</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody"></tbody>
+          </table>
+        </div>
         <div style="text-align: center; margin-top: 20px">
           <button
             onclick="closeHistoryModal()"
@@ -433,54 +702,146 @@
       </div>
     </div>
 
+    <div id="boost-modal" class="modal-overlay">
+      <div class="modal-box" style="text-align: center">
+        <span class="close-modal" onclick="closeBoostModal()">&times;</span>
+        <h3 style="color: #e74c3c">⚡ 슈퍼 부스트</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 15px">
+          설정한 시간 동안 채굴 속도가 빨라집니다.<br />
+          중복 사용은 불가능합니다.
+        </p>
+        <div style="margin: 20px 0; font-size: 18px">
+          <input
+            type="number"
+            id="boost-multiplier"
+            class="boost-input"
+            value="100"
+            min="100"
+            max="1000"
+          />
+          배 &nbsp;&nbsp;
+          <input
+            type="number"
+            id="boost-seconds"
+            class="boost-input"
+            value="10"
+            min="10"
+            max="30"
+          />
+          초
+        </div>
+        <button onclick="confirmBoost()" style="background: #e74c3c">
+          🚀 적용하기
+        </button>
+      </div>
+    </div>
+
     <script>
       const BACKEND_URL = "http://localhost:3000";
-      const STORAGE_MIN_TIME_MS = 10 * 1000;
+      const STORAGE_MIN_TIME_MS = 4 * 60 * 60 * 1000; // 4시간
 
       let miningData = null;
       let timer = null;
-      let prevSeasonData = null;
-      let totalDurationHours = 0;
+      let userNFTState = { c1: 0, c2: 0, c3: 0 };
 
-      function getNFTInfoByUserId(rawId) {
+      let maxTotalHours = 8;
+      let boostTimeout = null;
+      let lastServerCP = 0;
+      let lastFetchTime = 0;
+
+      function safeSetText(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+      }
+
+      function initNFTStateFromId(rawId) {
         const userId = rawId.replace(/\s+/g, "").toLowerCase();
         let c1 = 0,
           c2 = 0,
           c3 = 0;
-        if (userId === "nft1") c1 = 1;
-        else if (userId === "nft2") c2 = 1;
-        else if (userId === "nft3") c3 = 1;
-        else if (userId === "nft13") {
-          c1 = 1;
-          c3 = 1;
-        } else if (userId === "nft22") {
-          c2 = 2;
-        } else if (userId === "nft123") {
-          c1 = 1;
-          c2 = 1;
-          c3 = 1;
-        } else if (userId === "nft1123") {
-          c1 = 2;
-          c2 = 1;
-          c3 = 1;
+        let isValid = true;
+        switch (userId) {
+          case "test":
+          case "test1":
+          case "test2":
+            break;
+          case "nft1":
+            c1 = 1;
+            break;
+          case "nft2":
+            c2 = 1;
+            break;
+          case "nft3":
+            c3 = 1;
+            break;
+          case "nft13":
+            c1 = 1;
+            c3 = 1;
+            break;
+          case "nft22":
+            c2 = 2;
+            break;
+          case "nft123":
+            c1 = 1;
+            c2 = 1;
+            c3 = 1;
+            break;
+          case "nft1123":
+            c1 = 2;
+            c2 = 1;
+            c3 = 1;
+            break;
+          default:
+            isValid = false;
         }
+        if (!isValid) return false;
+        userNFTState = { c1, c2, c3 };
+        updateNFTDisplay();
+        return true;
+      }
+
+      function updateNFTDisplay() {
+        safeSetText("disp-c1", userNFTState.c1);
+        safeSetText("disp-c2", userNFTState.c2);
+        safeSetText("disp-c3", userNFTState.c3);
+      }
+      function addNftTest(type) {
+        userNFTState[type]++;
+        updateNFTDisplay();
+      }
+      function getCurrentNFTInfoPayload() {
         return {
-          c1: { count: c1, id: Array(c1).fill("sim") },
-          c2: { count: c2, id: Array(c2).fill("sim") },
-          c3: { count: c3, id: Array(c3).fill("sim") },
+          c1: {
+            count: userNFTState.c1,
+            id: Array(userNFTState.c1).fill("sim"),
+          },
+          c2: {
+            count: userNFTState.c2,
+            id: Array(userNFTState.c2).fill("sim"),
+          },
+          c3: {
+            count: userNFTState.c3,
+            id: Array(userNFTState.c3).fill("sim"),
+          },
         };
       }
 
       async function login() {
         const userId = document.getElementById("user-input").value.trim();
         if (!userId) return alert("ID를 입력해주세요!");
+        if (!initNFTStateFromId(userId))
+          return alert("허용되지 않은 ID입니다.");
+
         try {
           const res = await fetch(
             `${BACKEND_URL}/api/mining/status?user_id=${userId}`,
           );
           const json = await res.json();
-          if (json.success && json.data) showMiningScreen(userId, json.data);
-          else await startMining(userId);
+          if (json.success && json.data && json.data.start_time) {
+            showMiningScreen(userId, json.data);
+          } else {
+            await startMining(userId);
+          }
         } catch (err) {
           alert("오류: " + err.message);
         }
@@ -488,15 +849,21 @@
 
       async function startMining(userId) {
         try {
-          const nftInfo = getNFTInfoByUserId(userId);
+          const nftInfo = getCurrentNFTInfoPayload();
           const res = await fetch(`${BACKEND_URL}/api/mining/start`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: userId, nft_info: nftInfo }),
           });
           const json = await res.json();
-          if (json.success) login();
-          else alert("시작 실패: " + json.message);
+          if (json.success) {
+            const statusRes = await fetch(
+              `${BACKEND_URL}/api/mining/status?user_id=${userId}`,
+            );
+            const statusJson = await statusRes.json();
+            if (statusJson.success && statusJson.data)
+              showMiningScreen(userId, statusJson.data);
+          } else alert("시작 실패: " + json.message);
         } catch (err) {
           alert(err.message);
         }
@@ -506,7 +873,7 @@
         const userId = document.getElementById("user-input").value.trim();
         if (!confirm(`[${userId}] 보관하시겠습니까?`)) return;
         try {
-          const nftInfo = getNFTInfoByUserId(userId);
+          const nftInfo = getCurrentNFTInfoPayload();
           const res = await fetch(`${BACKEND_URL}/api/mining/save`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -515,9 +882,7 @@
           const json = await res.json();
           if (json.success) {
             alert(
-              `✅ 보관 완료! (Season ${
-                json.data.seasonNo
-              })\n저장량: ${json.data.savedCP.toLocaleString()} CP`,
+              `✅ 보관 완료!\n다음 시즌 스펙: 속도 ${json.data.newSpeed}, 시간 ${json.data.newDuration}h`,
             );
             login();
           } else {
@@ -528,30 +893,165 @@
         }
       }
 
+      // [추가] 포인트를 무조건 소수점 2자리로 보여주는 포맷터
+      const formatCP = (cp) =>
+        Number(cp).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+
+      // 1. 탭 전환 함수 추가
+      function switchTab(tabId) {
+        // 1) 모든 탭 버튼과 콘텐츠의 활성화 상태(active) 제거
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((content) => content.classList.remove("active"));
+
+        // 2) 클릭한 탭만 활성화
+        if (tabId === "current") {
+          document.getElementById("btn-tab-current").classList.add("active");
+          document.getElementById("tab-current").classList.add("active");
+        } else if (tabId === "prev") {
+          document.getElementById("btn-tab-prev").classList.add("active");
+          document.getElementById("tab-prev").classList.add("active");
+        } else if (tabId === "all") {
+          document.querySelectorAll(".tab-btn")[2].classList.add("active"); // 3번째 버튼(전체시즌)
+          document.getElementById("tab-all").classList.add("active");
+        }
+      }
+
       function showMiningScreen(userId, data) {
         miningData = data;
 
+        lastFetchTime = Date.now();
+        lastServerCP = data.current_cp || 0;
+
+        document.getElementById("guide-box").style.display = "none";
         document.getElementById("login-area").style.display = "none";
         document.getElementById("mining-area").style.display = "block";
-        document.getElementById("user-id-display").innerText = userId;
+        document.getElementById("dashboard-container").style.display = "block";
+        safeSetText("user-id-display", userId);
+        safeSetText("user-id-display", userId);
 
         const seasonNo = data.current_season_no || data.season_no || 1;
-        document.getElementById(
-          "season-display",
-        ).innerText = `Season ${seasonNo}`;
-        const weeklyPoint = data.weekly_point || 0;
-        document.getElementById("weekly-point-display").innerText =
-          weeklyPoint.toLocaleString();
-        document.getElementById("current-speed-display").innerText =
-          data.mining_speed.toLocaleString();
-        document.getElementById("current-duration-display").innerText =
-          data.mining_duration;
+        safeSetText("season-display", `Season ${seasonNo}`);
+        // 누적 점수 소수점 2자리 표시 적용
+        safeSetText("weekly-point-display", formatCP(data.weekly_point || 0));
+        safeSetText("current-speed-display", formatCP(data.mining_speed || 0));
 
-        totalDurationHours = data.mining_duration;
-        initProgressBar(totalDurationHours);
+        // ▼▼▼ [핵심] 대시보드 탭 데이터 바인딩 ▼▼▼
+        if (data.stats) {
+          const stats = data.stats;
+          const currentSeason = data.current_season_no || data.season_no;
+          const prevSeason =
+            stats.prev_season_no || (currentSeason > 1 ? currentSeason - 1 : 1);
+
+          // ① 탭 버튼 이름 동적 세팅
+          const btnCurrent = document.getElementById("btn-tab-current");
+          const btnPrev = document.getElementById("btn-tab-prev");
+          if (btnCurrent) btnCurrent.innerText = `Season ${currentSeason}`;
+          if (btnPrev) btnPrev.innerText = `Season ${prevSeason}`;
+
+          // ② [현재 시즌 탭]
+          const myPoint = data.weekly_point || 0; // 내 누적 포인트
+          let expectedReward = 0;
+          if (stats.current_total_point > 0 && myPoint > 0) {
+            expectedReward = Math.floor(
+              stats.current_pool * (myPoint / stats.current_total_point),
+            );
+          }
+
+          safeSetText("current-cp-display", `${formatCP(myPoint)} CP`); // 나의 누적 CP
+          safeSetText(
+            "current-pool-display",
+            (stats.current_pool || 0).toLocaleString(),
+          );
+          safeSetText(
+            "current-total-cp-display",
+            `${formatCP(stats.current_total_point || 0)} CP`,
+          ); // 이번 시즌 모든 유저 합산 CP
+          safeSetText(
+            "current-expected-display",
+            expectedReward.toLocaleString(),
+          );
+
+          // ③ [이전 시즌 탭]
+          safeSetText(
+            "prev-cp-display",
+            `${formatCP(stats.prev_point || 0)} CP`,
+          ); // 이전 시즌 나의 누적 CP
+          safeSetText(
+            "prev-pool-display",
+            (stats.prev_pool || 0).toLocaleString(),
+          );
+          safeSetText(
+            "prev-total-cp-display",
+            `${formatCP(stats.prev_total_point || 0)} CP`,
+          ); // 이전 시즌 모든 유저 합산 CP
+          safeSetText(
+            "prev-claim-display",
+            (stats.prev_claim || 0).toLocaleString(),
+          );
+
+          // ④ [전체 시즌 탭]
+          safeSetText(
+            "all-total-cp-display",
+            `${formatCP(stats.all_my_total_point || 0)} CP`,
+          ); // 모든 시즌에 걸친 '나'의 총 누적 CP
+          safeSetText(
+            "all-pool-display",
+            (stats.all_total_pool || 0).toLocaleString(),
+          );
+          safeSetText(
+            "all-claim-display",
+            (stats.all_total_claim || 0).toLocaleString(),
+          );
+        }
+        // ▲▲▲ 대시보드 탭 데이터 바인딩 끝 ▲▲▲
+
+        // [중요] 전체 시간 계산: DB에 저장된 NFT 정보를 기준으로 계산 (일관성 유지)
+        let dbNftInfo = {};
+        try {
+          dbNftInfo =
+            typeof data.nft_info === "string"
+              ? JSON.parse(data.nft_info)
+              : data.nft_info;
+        } catch (e) {}
+
+        const c1 = dbNftInfo.c1?.count || 0;
+        const c3 = dbNftInfo.c3?.count || 0;
+        let baseDuration = 8 + (c1 + c3) * 2;
+        maxTotalHours = baseDuration;
+
+        // 부스트 자동 종료 타이머 설정
+        if (boostTimeout) clearTimeout(boostTimeout);
+
+        if (data.boost_info && data.boost_info.active) {
+          const boostEndTime = data.boost_info.end_ts;
+          const now = new Date().getTime();
+          const remain = boostEndTime - now;
+
+          if (remain > 0) {
+            // 부스트 종료 0.5초 뒤에 데이터 갱신 (속도 원복을 위해)
+            boostTimeout = setTimeout(() => {
+              console.log("Boost expired, refreshing...");
+              login();
+            }, remain + 500);
+          }
+        }
+
+        // 한계 시간 표시 (DB값)
+        safeSetText("current-duration-display", data.mining_duration);
+
+        initProgressBar(maxTotalHours);
 
         if (data.prev_season) updateClaimUI(data.prev_season);
         else document.getElementById("claim-area").style.display = "none";
+
+        updateNFTDisplay();
 
         if (timer) clearInterval(timer);
         timer = setInterval(updateUI, 1000);
@@ -560,8 +1060,9 @@
 
       function initProgressBar(totalHours) {
         const track = document.getElementById("mining-progress-bar");
+        if (!track) return;
         track.innerHTML = "";
-        document.getElementById("total-hour-text").innerText = totalHours;
+        safeSetText("total-hour-text", totalHours);
         for (let i = 1; i <= totalHours; i++) {
           const cell = document.createElement("div");
           cell.className = "progress-cell";
@@ -572,9 +1073,10 @@
 
       function updateProgressBar(elapsedMs) {
         const track = document.getElementById("mining-progress-bar");
+        if (!track) return;
         const cells = track.children;
         const currentHourIndex = Math.floor(elapsedMs / (1000 * 60 * 60));
-        document.getElementById("progress-text").innerText = currentHourIndex;
+        safeSetText("progress-text", currentHourIndex);
 
         for (let i = 0; i < cells.length; i++) {
           cells[i].className = "progress-cell";
@@ -584,51 +1086,157 @@
       }
 
       function updateUI() {
-        if (!miningData) return;
-        const now = new Date();
-        const start = new Date(miningData.start_time);
-        const limitMs = miningData.mining_duration * 60 * 60 * 1000;
+        if (!miningData || !miningData.start_time) return;
 
-        let elapsedMs = now - start;
-        if (elapsedMs < 0) elapsedMs = 0;
+        const now = Date.now();
+        const start = new Date(miningData.start_time).getTime();
+
+        // 1. 총 경과 시간 (고정된 start_time 기준)
+        let totalElapsedMs = now - start;
+        if (totalElapsedMs < 0) totalElapsedMs = 0;
+
+        // 2. 최대 시간 제한 (Clamp)
+        const maxDurationMs = maxTotalHours * 60 * 60 * 1000;
+        if (totalElapsedMs > maxDurationMs) totalElapsedMs = maxDurationMs;
+
+        // 3. 남은 시간 계산
+        let remainingMs = maxDurationMs - totalElapsedMs;
+        if (remainingMs < 0) remainingMs = 0;
+
+        // 4. 포인트 표시 계산 (서버값 + 흐른 시간 * 현재속도)
+        const timeSinceFetch = now - lastFetchTime;
+
+        let pendingPoints = 0;
+        if (remainingMs > 0) {
+          pendingPoints = Math.floor(
+            (timeSinceFetch / 3600000) * miningData.mining_speed,
+          );
+        }
+
+        const displayCP = lastServerCP + pendingPoints;
+
+        // 5. 화면 업데이트
+        // ▼ [수정] 화면에 소수점 둘째 자리까지 표시 ▼
+        safeSetText("current-cp", formatCP(displayCP));
+        safeSetText("elapsed", formatTime(totalElapsedMs));
+        safeSetText("remaining", formatTime(remainingMs));
+
+        // 6. 상태바 & 텍스트
+        updateProgressBar(totalElapsedMs);
 
         const statusText = document.getElementById("status-text");
-        if (elapsedMs >= limitMs) {
-          elapsedMs = limitMs;
-          statusText.innerText = "■ 채굴 정지 (시간 초과)";
-          statusText.style.color = "red";
-        } else {
-          statusText.innerText = "● 채굴 중...";
-          statusText.style.color = "green";
+        if (statusText) {
+          if (remainingMs <= 0) {
+            statusText.innerText = "■ 채굴 완료";
+            statusText.style.color = "red";
+          } else {
+            statusText.innerText = "● 채굴 중";
+            statusText.style.color = "green";
+          }
         }
 
+        // 7. 부스트 버튼 상태 관리 및 타이머 텍스트 색상 변경
+        const boostTimerEl = document.getElementById("boost-timer-display");
+        const boostBtn = document.getElementById("btn-boost-trigger");
+        let isBoostActive = false;
+
+        if (miningData.boost_info && miningData.boost_info.active) {
+          const boostEndTime = miningData.boost_info.end_ts;
+          const boostRemainMs = boostEndTime - now;
+
+          if (boostRemainMs > 0) {
+            isBoostActive = true;
+            const remainSec = Math.ceil(boostRemainMs / 1000);
+            const rate = miningData.boost_info.multiplier; // 서버에서 받은 배율
+
+            if (boostTimerEl) {
+              boostTimerEl.innerText = `(⚡부스트: ${remainSec}초 남음)`;
+
+              // 그라데이션 초기화 (재사용 시 겹침 방지)
+              boostTimerEl.style.background = "none";
+              boostTimerEl.style.webkitBackgroundClip = "initial";
+              boostTimerEl.style.webkitTextFillColor = "initial";
+
+              // 배율에 따른 색상 적용
+              if (rate >= 100 && rate <= 199) {
+                boostTimerEl.style.color = "#3498db"; // 파란색
+              } else if (rate >= 200 && rate <= 399) {
+                boostTimerEl.style.color = "#2ecc71"; // 초록색
+              } else if (rate >= 400 && rate <= 599) {
+                boostTimerEl.style.color = "#f1c40f"; // 노란색
+              } else if (rate >= 600 && rate <= 799) {
+                boostTimerEl.style.color = "#e67e22"; // 주황색
+              } else if (rate >= 800 && rate <= 1000) {
+                // 빨강 ~ 보라 그라데이션 텍스트
+                boostTimerEl.style.background =
+                  "linear-gradient(to right, #e74c3c, #9b59b6)";
+                boostTimerEl.style.webkitBackgroundClip = "text";
+                boostTimerEl.style.webkitTextFillColor = "transparent";
+              } else {
+                boostTimerEl.style.color = "#e74c3c"; // 기본값 (범위 밖)
+              }
+            }
+          }
+        }
+
+        if (!isBoostActive) {
+          if (boostTimerEl) {
+            boostTimerEl.innerText = "";
+            boostTimerEl.style.background = "none";
+            boostTimerEl.style.webkitBackgroundClip = "initial";
+            boostTimerEl.style.webkitTextFillColor = "initial";
+          }
+          if (boostBtn) {
+            boostBtn.disabled = false;
+            boostBtn.innerText = "⚡ 부스트";
+            boostBtn.style.background = "#e74c3c";
+            boostBtn.style.cursor = "pointer";
+          }
+        } else {
+          if (boostBtn) {
+            boostBtn.disabled = true;
+            boostBtn.innerText = "⚡ 사용 중";
+            boostBtn.style.background = "#95a5a6";
+            boostBtn.style.cursor = "not-allowed";
+          }
+        }
+
+        // ▼▼▼ [수정된 부분] 8. 보관 버튼 활성화 로직 ▼▼▼
         const saveBtn = document.getElementById("save-btn");
-        if (elapsedMs >= STORAGE_MIN_TIME_MS) {
-          saveBtn.disabled = false;
-          saveBtn.classList.add("active");
-          saveBtn.innerText = "📦 코넛 조각 보관하기";
-        } else {
-          saveBtn.disabled = true;
-          saveBtn.classList.remove("active");
-          const remain = Math.ceil((STORAGE_MIN_TIME_MS - elapsedMs) / 1000);
-          saveBtn.innerText = `📦 코넛 조각 보관 (${remain}초)`;
+        if (saveBtn) {
+          const waitTime = STORAGE_MIN_TIME_MS - totalElapsedMs;
+
+          // 1순위: 부스트 중이면 무조건 잠금
+          if (isBoostActive) {
+            saveBtn.disabled = true;
+            saveBtn.classList.remove("active");
+            saveBtn.innerText = "⚡ 부스트 중 보관 불가";
+          }
+          // 2순위: 아직 4시간(대기 시간)이 지나지 않았을 때 -> 시간 보여주며 잠금
+          else if (waitTime > 0) {
+            saveBtn.disabled = true;
+            saveBtn.classList.remove("active");
+            saveBtn.innerText = `📦 코넛 조각 보관 (${formatTime(
+              waitTime,
+            )} 후)`;
+          }
+          // 3순위: 4시간이 지났고, 캘 포인트도 있을 때 -> 드디어 활성화!
+          else if (displayCP > 0) {
+            saveBtn.disabled = false;
+            saveBtn.classList.add("active");
+            saveBtn.innerText = "📦 코넛 조각 보관하기";
+          }
+          // 4순위: 4시간은 지났는데 포인트가 0일 때 (예외 처리)
+          else {
+            saveBtn.disabled = true;
+            saveBtn.classList.remove("active");
+            saveBtn.innerText = "📦 코넛 조각 보관 (0 CP)";
+          }
         }
-
-        const currentMiningCP = Math.floor(
-          (elapsedMs / 3600000) * miningData.mining_speed,
-        );
-        const totalCP = (miningData.mining_point || 0) + currentMiningCP;
-
-        document.getElementById("current-cp").innerText =
-          totalCP.toLocaleString();
-        document.getElementById("elapsed").innerText = formatTime(elapsedMs);
-        const remainMs = Math.max(0, limitMs - elapsedMs);
-        document.getElementById("remaining").innerText = formatTime(remainMs);
-
-        updateProgressBar(elapsedMs);
       }
 
       function formatTime(ms) {
+        if (isNaN(ms)) return "00:00:00";
         const totalSec = Math.floor(ms / 1000);
         const h = Math.floor(totalSec / 3600);
         const m = Math.floor((totalSec % 3600) / 60);
@@ -639,54 +1247,95 @@
         return n < 10 ? "0" + n : n;
       }
 
+      // 부스트
+      function openBoostModal() {
+        document.getElementById("boost-modal").style.display = "flex";
+      }
+      function closeBoostModal() {
+        document.getElementById("boost-modal").style.display = "none";
+      }
+
+      async function confirmBoost() {
+        const userId = document.getElementById("user-input").value.trim();
+        const multi = document.getElementById("boost-multiplier").value;
+        const sec = document.getElementById("boost-seconds").value;
+
+        // if (!confirm(`${sec}초 동안 ${multi}배 속도 적용?`)) return;
+
+        try {
+          const res = await fetch(`${BACKEND_URL}/api/mining/boost`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: userId,
+              multiplier: multi,
+              duration_sec: sec,
+            }),
+          });
+          const json = await res.json();
+          if (json.success) {
+            closeBoostModal();
+            // alert(`🚀 부스트 발동!`);
+            login();
+          } else {
+            alert("실패: " + json.message);
+          }
+        } catch (err) {
+          alert(err.message);
+        }
+      }
+
+      // ... (나머지 클레임, 히스토리 함수는 동일) ...
       function updateClaimUI(prevData) {
-        prevSeasonData = prevData;
+        /* ... */
         const claimArea = document.getElementById("claim-area");
         const claimBtn = document.getElementById("claim-btn");
         const msg = document.getElementById("claim-status-msg");
-        document.getElementById("claim-season-no").innerText =
-          prevData.season_no;
-        document.getElementById("claim-my-point").innerText =
-          prevData.my_point.toLocaleString();
-        document.getElementById("claim-total-point").innerText =
-          prevData.weekly_total_point.toLocaleString();
-        claimArea.style.display = "block";
+        safeSetText("claim-season-no", prevData.season_no);
+        safeSetText("claim-my-point", prevData.my_point.toLocaleString());
+        safeSetText(
+          "claim-total-point",
+          prevData.weekly_total_point.toLocaleString(),
+        );
+        if (claimArea) claimArea.style.display = "block";
         const now = new Date();
         const settleTime = new Date(prevData.settle_time);
         const endTime = new Date(prevData.claim_end_time);
+        if (!claimBtn) return;
         if (prevData.is_claimed) {
           claimBtn.disabled = true;
           claimBtn.innerText = "✅ 수령 완료";
           claimBtn.style.background = "#27ae60";
-          msg.innerText = "";
+          if (msg) msg.innerText = "";
         } else if (now < settleTime) {
           claimBtn.disabled = true;
           claimBtn.innerText = "⏳ 정산 중...";
-          msg.innerText = "아직 클레임 시간이 아닙니다.";
+          if (msg) msg.innerText = "아직 클레임 시간이 아닙니다.";
         } else if (now >= endTime) {
           claimBtn.disabled = true;
           claimBtn.innerText = "🚫 기간 만료";
-          msg.innerText = "클레임 기간이 지났습니다.";
+          if (msg) msg.innerText = "클레임 기간이 지났습니다.";
         } else {
           claimBtn.disabled = false;
           claimBtn.innerText = "🎁 토큰 받기";
           claimBtn.style.background = "#f1c40f";
           claimBtn.style.color = "#333";
-          msg.innerText = `클레임 가능 기간입니다! (~${
-            endTime.getMonth() + 1
-          }/${endTime.getDate()}까지)`;
+          if (msg)
+            msg.innerText = `클레임 가능 기간입니다! (~${
+              endTime.getMonth() + 1
+            }/${endTime.getDate()}까지)`;
         }
       }
-
       async function requestClaim() {
+        /* ... */
         if (!prevSeasonData) return;
         const userId = document.getElementById("user-input").value.trim();
         const seasonNo = prevSeasonData.season_no;
         if (!confirm(`Season ${seasonNo} 보상을 수령하시겠습니까?`)) return;
         await executeClaim(userId, seasonNo);
       }
-
       async function executeClaim(userId, seasonNo) {
+        /* ... */
         try {
           const res = await fetch(`${BACKEND_URL}/api/mining/claim`, {
             method: "POST",
@@ -710,15 +1359,14 @@
           alert("오류: " + err.message);
         }
       }
-
       async function openHistoryModal() {
+        /* ... */
         const userId = document.getElementById("user-input").value.trim();
         if (!userId) return;
         const modal = document.getElementById("history-modal");
         modal.style.display = "flex";
         const tbody = document.getElementById("history-tbody");
         tbody.innerHTML = '<tr><td colspan="3">데이터 불러오는 중...</td></tr>';
-
         try {
           const res = await fetch(
             `${BACKEND_URL}/api/mining/history?user_id=${userId}`,
@@ -731,44 +1379,36 @@
           tbody.innerHTML = `<tr><td colspan="3" style="color:red">오류: ${err.message}</td></tr>`;
         }
       }
-
       function closeHistoryModal() {
         document.getElementById("history-modal").style.display = "none";
       }
-
       function renderHistoryTable(list) {
+        /* ... */
         const tbody = document.getElementById("history-tbody");
         tbody.innerHTML = "";
-
-        // ▼▼▼ [수정] 총 획득 토큰 계산 및 표시 ▼▼▼
         let totalTokens = 0;
-
         if (list.length === 0) {
           tbody.innerHTML =
             '<tr><td colspan="3">참여 기록이 없습니다.</td></tr>';
-          document.getElementById("total-claimed-tokens").innerText = "0";
+          safeSetText("total-claimed-tokens", "0");
           return;
         }
-
         list.forEach((item) => {
           const tr = document.createElement("tr");
           let statusClass = "";
           let tokenText = `${item.token_amount.toLocaleString()}개`;
-
-          // 합계 계산 (상태가 완료인 것만)
           if (item.status === "완료") {
             statusClass = "status-done";
             totalTokens += item.token_amount;
           } else if (item.status === "클레임 가능")
             statusClass = "status-claim";
-          else if (item.status === "기간 종료") statusClass = "status-expired";
+          else if (item.status === "기간 종료" || item.status === "미참여")
+            statusClass = "status-expired";
           else if (item.status === "진행 중") {
             statusClass = "status-ing";
             tokenText = "-";
           }
-
-          tr.innerHTML = `<td><strong>시즌 ${item.season_no}</strong></td><td>${tokenText}</td><td class="${statusClass}">${item.status}</td>`;
-
+          tr.innerHTML = `<td>Season ${item.season_no}</td><td>${tokenText}</td><td class="${statusClass}">${item.status}</td>`;
           if (item.status === "클레임 가능") {
             tr.onclick = () => {
               if (
@@ -786,10 +1426,7 @@
           }
           tbody.appendChild(tr);
         });
-
-        // 총계 업데이트
-        document.getElementById("total-claimed-tokens").innerText =
-          totalTokens.toLocaleString();
+        safeSetText("total-claimed-tokens", totalTokens.toLocaleString());
       }
     </script>
   </body>
